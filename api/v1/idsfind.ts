@@ -5,6 +5,8 @@ import { writeArray, writeObject } from './_lib/json-encoder'
 
 const idsFinder = new IDSFinder()
 
+const jsonContentType = 'application/json; charset=utf-8'
+
 function castToStringArray(x: string | string[] | null): string[] {
   if (x == null) {
     return []
@@ -21,7 +23,9 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   whole = castToStringArray(whole)
 
   if (ids.length === 0) {
-    response.status(400).send({ message: 'No ids param' })
+    response.status(400)
+    response.setHeader('Content-Type', jsonContentType)
+    response.send({ message: 'No ids param' })
     return
   }
 
@@ -34,6 +38,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     await new Promise((resolve) => response.once('drain', resolve))
   }
   response.status(200)
+  response.setHeader('Content-Type', jsonContentType)
   await writeObject(write, [
     ['query', { ids, whole }],
     ['results', async () => await writeArray(write, results)],
