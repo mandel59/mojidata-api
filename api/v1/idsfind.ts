@@ -28,10 +28,10 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
 
-  if (ids.length === 0) {
+  if (ids.length === 0 && whole.length === 0) {
     response.status(400)
     headers.forEach(({ key, value }) => response.setHeader(key, value))
-    response.send({ message: 'No ids param' })
+    response.send({ message: 'No parameters' })
     return
   }
 
