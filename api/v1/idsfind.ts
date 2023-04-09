@@ -7,6 +7,12 @@ const idsFinder = new IDSFinder()
 
 const jsonContentType = 'application/json; charset=utf-8'
 
+const headers = [
+  { key: 'Content-Type', value: jsonContentType },
+  { key: 'Access-Control-Allow-Origin', value: '*' },
+  { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS' },
+]
+
 function castToStringArray(x: string | string[] | null): string[] {
   if (x == null) {
     return []
@@ -24,7 +30,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 
   if (ids.length === 0) {
     response.status(400)
-    response.setHeader('Content-Type', jsonContentType)
+    headers.forEach(({ key, value }) => response.setHeader(key, value))
     response.send({ message: 'No ids param' })
     return
   }
@@ -38,7 +44,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     await new Promise((resolve) => response.once('drain', resolve))
   }
   response.status(200)
-  response.setHeader('Content-Type', jsonContentType)
+  headers.forEach(({ key, value }) => response.setHeader(key, value))
   await writeObject(write, [
     ['query', { ids, whole }],
     ['results', async () => await writeArray(write, results)],
