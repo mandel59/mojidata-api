@@ -1,5 +1,6 @@
 export type IterableOrAsyncIterable<T> = Iterable<T> | AsyncIterable<T>
 export type MaybePromise<T> = T | Promise<T>
+export type Falsy = false | 0 | '' | null | undefined
 
 export type Writer = (chunk: string) => MaybePromise<void>
 
@@ -42,17 +43,28 @@ export async function writeArray<T extends Serializable>(
 
 export async function writeObject(
   write: Writer,
-  entries: IterableOrAsyncIterable<[key: string, value: Serializable]>,
+  entries: IterableOrAsyncIterable<
+    [key: string, value: Serializable] | Falsy
+  >,
 ) {
   await write('{')
   let previous = false
-  for await (const [key, value] of entries) {
+  for await (const entry of entries) {
+    if (!entry) {
+      continue
+    }
+    const [key, value] = entry
     if (previous) {
       await write(',')
     }
     await write(JSON.stringify(key))
     await write(':')
-    previous = (await writeValue(write, value)) || false
+    previous = true
+    const filled = (await writeValue(write, value)) || false
+    if (!filled) {
+      // fallback to null
+      write('null')
+    }
   }
   await write('}')
   return true

@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
-import { writeArray, writeObject } from './_lib/json-encoder'
+import { writeArray, writeObject, writeValue } from './_lib/json-encoder'
+
+type Ref<T> = { current: T }
 
 const idsFinder = new IDSFinder()
 
@@ -34,13 +36,21 @@ function* skipUntil<T>(
   yield* gen
 }
 
-function* take<T>(n: number, gen: Generator<T>): Generator<T> {
+function* take<T>(
+  n: number,
+  gen: Generator<T>,
+  doneRef?: Ref<boolean | undefined>,
+): Generator<T> {
   let next = gen.next()
   for (let i = 0; i < n; i++) {
-    if (next.done) return
+    if (next.done) {
+      if (doneRef) doneRef.current = true
+      return
+    }
     yield next.value
     next = gen.next()
   }
+  if (doneRef) doneRef.current = next.done ?? false
 }
 
 export default async (request: VercelRequest, response: VercelResponse) => {
@@ -49,6 +59,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   whole = castToStringArray(whole)
   const limitNum = (limit && parseInt(String(limit), 10)) || undefined
   const afterStr = after ? String(after) : undefined
+  const doneRef: Ref<boolean | undefined> = { current: undefined }
 
   if (ids.length === 0 && whole.length === 0) {
     response.status(400)
@@ -62,8 +73,11 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   if (afterStr) {
     results = skipUntil((x) => x === afterStr, results)
   }
-  if (Number.isSafeInteger(limitNum)) {
-    results = take(limitNum!, results)
+
+  const usingLimit = Number.isSafeInteger(limitNum)
+
+  if (usingLimit) {
+    results = take(limitNum!, results, doneRef)
   }
 
   const write = async (chunk: string) => {
@@ -77,6 +91,10 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   await writeObject(write, [
     ['query', { ids, whole, after: afterStr, limit: limitNum }],
     ['results', async () => await writeArray(write, results)],
+    usingLimit && [
+      'done',
+      async () => await writeValue(write, doneRef.current),
+    ],
   ])
   response.end()
 }
