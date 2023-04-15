@@ -23,10 +23,32 @@ function castToStringArray(x: string | string[] | null): string[] {
   return x
 }
 
+function* skipUntil<T>(
+  condition: (x: T) => boolean,
+  gen: Generator<T>,
+): Generator<T> {
+  let next = gen.next()
+  while (!next.done && !condition(next.value)) {
+    next = gen.next()
+  }
+  yield* gen
+}
+
+function* take<T>(n: number, gen: Generator<T>): Generator<T> {
+  let next = gen.next()
+  for (let i = 0; i < n; i++) {
+    if (next.done) return
+    yield next.value
+    next = gen.next()
+  }
+}
+
 export default async (request: VercelRequest, response: VercelResponse) => {
-  let { ids, whole } = request.query
+  let { ids, whole, limit, after } = request.query
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
+  const limitNum = (limit && parseInt(String(limit), 10)) || undefined
+  const afterStr = after ? String(after) : undefined
 
   if (ids.length === 0 && whole.length === 0) {
     response.status(400)
@@ -35,7 +57,14 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     return
   }
 
-  const results = idsFinder.find(...ids, ...whole.map((x) => `§${whole}§`))
+  let results = idsFinder.find(...ids, ...whole.map((x) => `§${whole}§`))
+
+  if (afterStr) {
+    results = skipUntil((x) => x === afterStr, results)
+  }
+  if (Number.isSafeInteger(limitNum)) {
+    results = take(limitNum!, results)
+  }
 
   const write = async (chunk: string) => {
     if (response.write(chunk)) {
@@ -46,7 +75,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   response.status(200)
   headers.forEach(({ key, value }) => response.setHeader(key, value))
   await writeObject(write, [
-    ['query', { ids, whole }],
+    ['query', { ids, whole, after: afterStr, limit: limitNum }],
     ['results', async () => await writeArray(write, results)],
   ])
   response.end()
