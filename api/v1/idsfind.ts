@@ -64,7 +64,10 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   if (ids.length === 0 && whole.length === 0) {
     response.status(400)
     headers.forEach(({ key, value }) => response.setHeader(key, value))
-    response.send({ message: 'No parameters' })
+    response.send({
+      message: 'No parameters',
+      error: { message: 'No parameters' },
+    })
     return
   }
 
