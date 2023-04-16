@@ -13,6 +13,11 @@ export type Serializable =
   | undefined
   | (() => MaybePromise<boolean>)
 
+export async function writeJson(write: Writer, json: string) {
+  await write(json)
+  return true
+}
+
 export async function writeValue(write: Writer, value: Serializable) {
   if (value === undefined) {
     return false
@@ -43,9 +48,7 @@ export async function writeArray<T extends Serializable>(
 
 export async function writeObject(
   write: Writer,
-  entries: IterableOrAsyncIterable<
-    [key: string, value: Serializable] | Falsy
-  >,
+  entries: IterableOrAsyncIterable<[key: string, value: Serializable] | Falsy>,
 ) {
   await write('{')
   let previous = false
