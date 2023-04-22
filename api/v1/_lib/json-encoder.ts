@@ -23,7 +23,7 @@ export async function writeValue(write: Writer, value: Serializable) {
     return false
   }
   if (typeof value === 'function') {
-    return await value()
+    return await (value as () => MaybePromise<boolean>)()
   } else {
     await write(JSON.stringify(value))
     return true
@@ -63,7 +63,7 @@ export async function writeObject(
     await write(JSON.stringify(key))
     await write(':')
     previous = true
-    const filled = (await writeValue(write, value)) || false
+    const filled = await writeValue(write, value)
     if (!filled) {
       // fallback to null
       write('null')
