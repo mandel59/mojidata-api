@@ -25,13 +25,12 @@ function castToStringArray(x: string | string[] | null): string[] {
   return x
 }
 
-function* skipUntil<T>(
-  condition: (x: T) => boolean,
-  gen: Generator<T>,
-): Generator<T> {
-  let next = gen.next()
-  while (!next.done && !condition(next.value)) {
-    next = gen.next()
+function* drop<T>(n: number, gen: Generator<T>): Generator<T> {
+  for (let i = 0; i < n; i++) {
+    const { done } = gen.next()
+    if (done) {
+      return
+    }
   }
   yield* gen
 }
@@ -54,11 +53,11 @@ function* take<T>(
 }
 
 export default async (request: VercelRequest, response: VercelResponse) => {
-  let { ids, whole, limit, after } = request.query
+  let { ids, whole, limit, offset } = request.query
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
   const limitNum = (limit && parseInt(String(limit), 10)) || undefined
-  const afterStr = after ? String(after) : undefined
+  const offsetNum = (offset && parseInt(String(offset), 10)) || undefined
   const doneRef: Ref<boolean | undefined> = { current: undefined }
 
   if (ids.length === 0 && whole.length === 0) {
@@ -73,11 +72,12 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 
   let results = idsFinder.find(...ids, ...whole.map((x) => `§${whole}§`))
 
-  if (afterStr) {
-    results = skipUntil((x) => x === afterStr, results)
-  }
+  const usingLimit = Number.isSafeInteger(limitNum) && limitNum! > 0
+  const usingOffset = Number.isSafeInteger(offsetNum) && offsetNum! > 0
 
-  const usingLimit = Number.isSafeInteger(limitNum)
+  if (usingOffset) {
+    results = drop(offsetNum!, results)
+  }
 
   if (usingLimit) {
     results = take(limitNum!, results, doneRef)
@@ -92,7 +92,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   response.status(200)
   headers.forEach(({ key, value }) => response.setHeader(key, value))
   await writeObject(write, [
-    ['query', { ids, whole, after: afterStr, limit: limitNum }],
+    ['query', { ids, whole, limit: limitNum, offset: offsetNum }],
     ['results', async () => await writeArray(write, results)],
     usingLimit && [
       'done',
