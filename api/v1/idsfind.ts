@@ -3,7 +3,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
 import { writeObject } from './_lib/json-encoder'
 
-const idsFinder = new IDSFinder()
+const idsFinder = new IDSFinder({
+  dbOptions: {
+    timeout: 9000,
+  },
+})
 
 type Ref<T> = { current: T }
 
