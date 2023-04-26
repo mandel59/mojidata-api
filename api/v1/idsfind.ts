@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
-import { writeArray, writeObject, writeValue } from './_lib/json-encoder'
+import { writeObject } from './_lib/json-encoder'
+
+const idsFinder = new IDSFinder()
 
 type Ref<T> = { current: T }
 
@@ -51,8 +53,6 @@ function* take<T>(
 }
 
 export default async (request: VercelRequest, response: VercelResponse) => {
-  const idsFinder = new IDSFinder()
-
   let { ids, whole, limit, offset } = request.query
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
@@ -83,6 +83,8 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     results = take(limitNum!, results, doneRef)
   }
 
+  const resultValues = [...results]
+
   const write = async (chunk: string) => {
     if (response.write(chunk)) {
       return
@@ -93,12 +95,8 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   headers.forEach(({ key, value }) => response.setHeader(key, value))
   await writeObject(write, [
     ['query', { ids, whole, limit: limitNum, offset: offsetNum }],
-    ['results', async () => await writeArray(write, results)],
-    usingLimit && [
-      'done',
-      async () => await writeValue(write, doneRef.current),
-    ],
+    ['results', resultValues],
+    usingLimit && ['done', doneRef.current],
   ])
   response.end()
-  idsFinder.close()
 }
