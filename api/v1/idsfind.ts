@@ -5,8 +5,6 @@ import { writeArray, writeObject, writeValue } from './_lib/json-encoder'
 
 type Ref<T> = { current: T }
 
-const idsFinder = new IDSFinder()
-
 const jsonContentType = 'application/json; charset=utf-8'
 
 const headers = [
@@ -53,6 +51,8 @@ function* take<T>(
 }
 
 export default async (request: VercelRequest, response: VercelResponse) => {
+  const idsFinder = new IDSFinder()
+
   let { ids, whole, limit, offset } = request.query
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
