@@ -100,4 +100,5 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     ],
   ])
   response.end()
+  idsFinder.close()
 }

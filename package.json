@@ -11,7 +11,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@mandel59/idstool": "^1.2.5",
+    "@mandel59/idstool": "^1.2.6",
     "@mandel59/mojidata": "^1.2.0",
     "@vercel/edge": "^0.3.2",
     "next": "^13.3.0",
