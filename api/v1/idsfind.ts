@@ -3,8 +3,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
 import { writeObject } from './_lib/json-encoder'
 
-const idsFinderBuffer = new IDSFinder().db.serialize()
-
 type Ref<T> = { current: T }
 
 const jsonContentType = 'application/json; charset=utf-8'
@@ -54,7 +52,9 @@ function* take<T>(
 
 export default async (request: VercelRequest, response: VercelResponse) => {
   const idsFinder = new IDSFinder({
-    dbpath: idsFinderBuffer as any,
+    dbOptions: {
+      readonly: true,
+    },
   })
   let { ids, whole, limit, offset } = request.query
   ids = castToStringArray(ids)
