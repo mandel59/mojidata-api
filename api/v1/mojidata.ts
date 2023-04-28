@@ -49,12 +49,20 @@ const queryExpressions = [
     `(SELECT json_group_array(CASE WHEN additional_data IS NOT NULL THEN json_array(property, printf('U+%04X', unicode(value)), value, additional_data) ELSE json_array(property, printf('U+%04X', unicode(value)), value) END) FROM unihan_variant WHERE unihan_variant.UCS = @ucs)`,
   ],
   [
+    'unihan_variant_inverse',
+    `(SELECT json_group_array(CASE WHEN additional_data IS NOT NULL THEN json_array(property, printf('U+%04X', unicode(UCS)), UCS, additional_data) ELSE json_array(property, printf('U+%04X', unicode(UCS)), UCS) END) FROM unihan_variant WHERE unihan_variant.value = @ucs)`,
+  ],
+  [
     'joyo',
     `(SELECT json_group_array(json_object('音訓', 音訓, '例', json(例), '備考', 備考)) FROM joyo WHERE joyo.漢字 = @ucs)`,
   ],
   [
     'joyo_kangxi',
     `(SELECT json_group_array(康熙字典体) FROM joyo_kangxi WHERE joyo_kangxi.漢字 = @ucs)`,
+  ],
+  [
+    'joyo_kangxi_inverse',
+    `(SELECT json_group_array(漢字) FROM joyo_kangxi WHERE joyo_kangxi.康熙字典体 = @ucs)`,
   ],
   [
     'doon',
@@ -97,6 +105,7 @@ const queryExpressions = [
     'mji',
     `(
         SELECT json_group_array(json_object(
+            '文字', coalesce(実装したSVS, 実装したUCS, 実装したMoji_JohoコレクションIVS),
             'MJ文字図形名', MJ文字図形名,
             '対応するUCS', CASE WHEN 対応するUCS IS NOT NULL THEN printf('U+%04X', unicode(対応するUCS)) END,
             '実装したUCS', CASE WHEN 実装したUCS IS NOT NULL THEN printf('U+%04X', unicode(実装したUCS)) END,
@@ -135,6 +144,20 @@ const queryExpressions = [
             )))
         FROM mji
         WHERE mji.対応するUCS = @ucs OR mji.実装したUCS = @ucs)`,
+  ],
+  [
+    'mjsm_inverse',
+    `(
+        SELECT json_group_array(json_object(
+            '表', mjsm.表,
+            '文字', coalesce(実装したSVS, 実装したUCS, 実装したMoji_JohoコレクションIVS),
+            'MJ文字図形名', mji.MJ文字図形名,
+            '対応するUCS', CASE WHEN 対応するUCS IS NOT NULL THEN printf('U+%04X', unicode(対応するUCS)) END,
+            '実装したUCS', CASE WHEN 実装したUCS IS NOT NULL THEN printf('U+%04X', unicode(実装したUCS)) END,
+            '実装したMoji_JohoコレクションIVS', CASE WHEN 実装したMoji_JohoコレクションIVS IS NOT NULL THEN printf('%04X_%04X', unicode(実装したMoji_JohoコレクションIVS), unicode(substr(実装したMoji_JohoコレクションIVS, 2))) END,
+            '実装したSVS', CASE WHEN 実装したSVS IS NOT NULL THEN printf('%04X_%04X', unicode(実装したSVS), unicode(substr(実装したSVS, 2))) END))
+        FROM mji join mjsm on mji.MJ文字図形名 = mjsm.MJ文字図形名
+        WHERE mjsm.縮退UCS = @ucs)`,
   ],
   [
     'kdpv',
