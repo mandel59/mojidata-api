@@ -45,6 +45,17 @@ const queryExpressions = [
     `(SELECT json_group_object(property, value) FROM unihan WHERE unihan.UCS = @ucs)`,
   ],
   [
+    'unihan_fts',
+    `(SELECT json_group_array(json_array(printf('U+%04X', unicode(UCS)), UCS, property, value)) FROM
+      (SELECT * FROM unihan
+        WHERE unicode(@ucs) > 0xFF AND (
+          unihan.value glob printf('*%s*', @ucs)
+          OR (unihan.value glob printf('*U+%04X*', unicode(@ucs))
+            AND NOT unihan.value glob printf('*U+%04X[0-9A-F]*', unicode(@ucs))))
+        ORDER BY UCS
+        LIMIT 100))`,
+  ],
+  [
     'unihan_variant',
     `(SELECT json_group_array(CASE WHEN additional_data IS NOT NULL THEN json_array(property, printf('U+%04X', unicode(value)), value, additional_data) ELSE json_array(property, printf('U+%04X', unicode(value)), value) END) FROM unihan_variant WHERE unihan_variant.UCS = @ucs)`,
   ],
