@@ -18,6 +18,10 @@ const queryExpressions = [
     `(SELECT json_group_array(json_object('IDS', ids.IDS, 'source', ids.source)) FROM ids WHERE ids.UCS = @ucs)`,
   ],
   [
+    'ids_similar',
+    `(SELECT json_group_array(json_object('UCS', ids.UCS, 'IDS', ids.IDS, 'source', ids.source)) FROM ids WHERE ids.IDS glob ('[〾↔↷]' || @ucs))`,
+  ],
+  [
     'ids_comment',
     `(SELECT json_group_array(ids_comment.comment) FROM ids_comment WHERE ids_comment.UCS = @ucs)`,
   ],
