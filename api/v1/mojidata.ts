@@ -12,7 +12,17 @@ const db = new Database(mojidb)
 const queryExpressions = [
   ['char', `@ucs`],
   ['UCS', `printf('U+%04X', unicode(@ucs))`],
-  ['aj1', `(SELECT json_object('CID', CID) FROM aj1 WHERE aj1.UCS = @ucs)`],
+  ['aj1', `CASE WHEN (@ucs IN (SELECT UCS FROM aj1)) THEN json_object(
+    'CID', (SELECT CID FROM aj1 WHERE UCS = @ucs ORDER BY vertical ASC, UniJIS2004 DESC, CID ASC LIMIT 1),
+    'jp90', (SELECT CID FROM aj1_UniJIS_H WHERE UCS = @ucs),
+    'jp90_V', (SELECT CID FROM aj1_UniJIS_V WHERE UCS = @ucs),
+    'jp04', (SELECT CID FROM aj1_UniJIS2004_H WHERE UCS = @ucs),
+    'jp04_V', (SELECT CID FROM aj1_UniJIS2004_V WHERE UCS = @ucs),
+    'mac_jp90', (SELECT CID FROM aj1_UniJISX0213_H WHERE UCS = @ucs),
+    'mac_jp90_V', (SELECT CID FROM aj1_UniJISX0213_V WHERE UCS = @ucs),
+    'mac_jp04', (SELECT CID FROM aj1_UniJISX02132004_H WHERE UCS = @ucs),
+    'mac_jp04_V', (SELECT CID FROM aj1_UniJISX02132004_V WHERE UCS = @ucs)
+  ) END`],
   [
     'ids',
     `(SELECT json_group_array(json_object('IDS', ids.IDS, 'source', ids.source)) FROM ids WHERE ids.UCS = @ucs)`,
