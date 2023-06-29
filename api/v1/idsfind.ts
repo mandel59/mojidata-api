@@ -50,18 +50,27 @@ function* take<T>(
   if (doneRef) doneRef.current = next.done ?? false
 }
 
+function* filter<T>(fn: (x: T) => boolean, gen: Generator<T>): Generator<T> {
+  for (const x of gen) {
+    if (fn(x)) {
+      yield x
+    }
+  }
+}
+
 export default async (request: VercelRequest, response: VercelResponse) => {
   const idsFinder = new IDSFinder({
     dbOptions: {
       readonly: true,
     },
   })
-  let { ids, whole, limit, offset } = request.query
+  let { ids, whole, limit, offset, all_results } = request.query
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
   const limitNum = (limit && parseInt(String(limit), 10)) || undefined
   const offsetNum = (offset && parseInt(String(offset), 10)) || undefined
   const doneRef: Ref<boolean | undefined> = { current: undefined }
+  const allResults = Boolean(all_results)
 
   if (ids.length === 0 && whole.length === 0) {
     response.status(400)
@@ -77,6 +86,10 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 
   const usingLimit = Number.isSafeInteger(limitNum) && limitNum! > 0
   const usingOffset = Number.isSafeInteger(offsetNum) && offsetNum! > 0
+
+  if (!allResults) {
+    results = filter((x) => x[0] !== '&', results)
+  }
 
   if (usingOffset) {
     results = drop(offsetNum!, results)
