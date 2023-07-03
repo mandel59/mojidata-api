@@ -33,6 +33,19 @@ export const queryExpressions = [
         'code', ivs.code)) FROM ivs WHERE ivs.IVS glob (@ucs || '*'))`,
   ],
   [
+    'ivs_duplicate',
+    `(select json_group_array(json_array(
+      printf('%04X_%04X', unicode(ivs1.IVS), unicode(substring(ivs1.IVS, 2, 1))),
+      ivs1.IVS,
+      printf('%04X_%04X', unicode(ivs2.IVS), unicode(substring(ivs2.IVS, 2, 1))),
+      ivs2.IVS,
+      collection,
+      code))
+    from ivs as ivs1
+      join ivs as ivs2 using (collection, code)
+    where (ivs1.IVS <> ivs2.IVS) and (ivs1.IVS glob (@ucs || '*')))`,
+  ],
+  [
     'svs_cjkci',
     `(
         SELECT json_group_array(json_object(
