@@ -14,13 +14,12 @@
     "@mandel59/idstool": "^1.4.1",
     "@mandel59/mojidata": "^1.4.1",
     "@vercel/edge": "^0.3.2",
-    "next": "^13.3.0",
-    "sql.js": "^1.8.0"
+    "better-sqlite3": "^9.4.1",
+    "next": "^13.3.0"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
     "@types/node-fetch": "^2.6.3",
-    "@types/sql.js": "^1.4.4",
     "@vercel/node": "^2.10.3",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4",
