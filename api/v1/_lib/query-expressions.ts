@@ -82,7 +82,8 @@ export const queryExpressions = [
         SELECT json_group_array(json_array(
           cast(r.groups ->> '$.r' as integer),
           cast(r.groups ->> '$.s' as integer),
-          radical_CJKUI))
+          radical_CJKUI,
+          r.groups ->> '$.r'))
         FROM unihan_kRSUnicode AS u
         JOIN regexp_all(u.value, '(?:^| )(?<r>[1-9][0-9]{0,2}''{0,2})\\.(?<s>-?[0-9]{1,2})') AS r
         JOIN radicals ON radicals.radical = r.groups ->> '$.r'
