@@ -57,6 +57,12 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     response.send(JSON.stringify({ error: { message: 'char is required' } }))
     return
   }
+  if (typeof char === "string" && char.length > 1) {
+    const m = /U\+?([0-9A-F]+)/i.exec(char)
+    if (m) {
+      char = String.fromCodePoint(parseInt(m[1], 16))
+    }
+  }
   if ([...char].length !== 1) {
     response.status(400)
     headers.forEach(({ key, value }) => response.setHeader(key, value))
