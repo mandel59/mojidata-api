@@ -69,7 +69,7 @@ declare module "better-sqlite3" {
     }
 
     export interface VirtualTableOptions {
-        rows: () => Generator;
+        rows: (...args: any[]) => Generator;
         columns: string[];
         parameters?: string[] | undefined;
         safeIntegers?: boolean | undefined;
