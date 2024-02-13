@@ -61,6 +61,35 @@ export const queryExpressions = [
     `(SELECT json_group_object(property, value) FROM unihan WHERE unihan.UCS = @ucs)`,
   ],
   [
+    'unihan_rs',
+    `(SELECT json_object(
+      'kRSAdobe_Japan1_6', (
+        SELECT json_group_array(json_array(
+          cast(r.groups ->> '$.r' as integer),
+          cast(r.groups ->> '$.s' as integer),
+          部首漢字,
+          cast(r.groups ->> '$.rs' as integer),
+          format('CID+%d', r.groups ->> '$.cid'))
+          ORDER BY
+            cast(r.groups ->> '$.cid' as integer),
+            cast(r.groups ->> '$.r' as integer),
+            cast(r.groups ->> '$.rs' as integer))
+        FROM unihan_kRSAdobe_Japan1_6 AS u
+        JOIN regexp_all(u.value, '(?:^| )[CV]\\+(?<cid>[0-9]{1,5})\\+(?<r>[1-9][0-9]{0,2})\\.(?<rs>[1-9][0-9]?)\\.(?<s>[0-9]{1,2})') AS r
+        JOIN radicals ON radicals.部首 = r.groups ->> '$.r'
+        WHERE UCS = @ucs),
+      'kRSUnicode', (
+        SELECT json_group_array(json_array(
+          cast(r.groups ->> '$.r' as integer),
+          cast(r.groups ->> '$.s' as integer),
+          radical_CJKUI))
+        FROM unihan_kRSUnicode AS u
+        JOIN regexp_all(u.value, '(?:^| )(?<r>[1-9][0-9]{0,2}''{0,2})\\.(?<s>-?[0-9]{1,2})') AS r
+        JOIN radicals ON radicals.radical = r.groups ->> '$.r'
+        WHERE UCS = @ucs)
+    ))`,
+  ],
+  [
     'unihan_fts',
     `(SELECT json_group_array(json_array(printf('U+%04X', unicode(UCS)), UCS, property, value)) FROM
       (SELECT * FROM unihan
@@ -150,7 +179,11 @@ export const queryExpressions = [
             'X0212', X0212,
             'MJ文字図形バージョン', MJ文字図形バージョン,
             '登記統一文字番号', 登記統一文字番号,
-            '部首・内画数', (SELECT json_group_array(json_array(部首, 内画数)) FROM mji_rsindex WHERE mji_rsindex.MJ文字図形名 = mji.MJ文字図形名),
+            '部首・内画数', (SELECT json_group_array(json_array(
+              部首,
+              内画数,
+              部首漢字
+            )) FROM mji_rsindex JOIN radicals USING (部首) WHERE mji_rsindex.MJ文字図形名 = mji.MJ文字図形名),
             '総画数', 総画数,
             '読み', (SELECT json_group_array(読み) FROM mji_reading WHERE mji_reading.MJ文字図形名 = mji.MJ文字図形名),
             '大漢和', 大漢和,
