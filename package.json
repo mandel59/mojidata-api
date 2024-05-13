@@ -11,8 +11,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@mandel59/idstool": "^1.4.2",
-    "@mandel59/mojidata": "^1.4.1",
+    "@mandel59/idstool": "^1.4.3",
+    "@mandel59/mojidata": "^1.4.3",
     "@vercel/edge": "^0.3.2",
     "better-sqlite3": "^9.4.1",
     "next": "^13.3.0"
