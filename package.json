@@ -15,7 +15,7 @@
     "@mandel59/mojidata": "^1.4.3",
     "@vercel/edge": "^0.3.2",
     "better-sqlite3": "^9.4.1",
-    "next": "^13.3.0"
+    "next": "^14.2.3"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
