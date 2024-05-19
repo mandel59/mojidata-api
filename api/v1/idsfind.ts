@@ -2,8 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
 import { writeObject } from './_lib/json-encoder'
-
-type Ref<T> = { current: T }
+import { Ref, drop, filter, take } from './_lib/iterator-utils'
 
 const jsonContentType = 'application/json; charset=utf-8'
 
@@ -21,41 +20,6 @@ function castToStringArray(x: string | string[] | null): string[] {
     return [x]
   }
   return x
-}
-
-function* drop<T>(n: number, gen: Generator<T>): Generator<T> {
-  for (let i = 0; i < n; i++) {
-    const { done } = gen.next()
-    if (done) {
-      return
-    }
-  }
-  yield* gen
-}
-
-function* take<T>(
-  n: number,
-  gen: Generator<T>,
-  doneRef?: Ref<boolean | undefined>,
-): Generator<T> {
-  let next = gen.next()
-  for (let i = 0; i < n; i++) {
-    if (next.done) {
-      if (doneRef) doneRef.current = true
-      return
-    }
-    yield next.value
-    next = gen.next()
-  }
-  if (doneRef) doneRef.current = next.done ?? false
-}
-
-function* filter<T>(fn: (x: T) => boolean, gen: Generator<T>): Generator<T> {
-  for (const x of gen) {
-    if (fn(x)) {
-      yield x
-    }
-  }
 }
 
 export default async (request: VercelRequest, response: VercelResponse) => {
@@ -113,6 +77,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     ['query', { ids, whole, limit: limitNum, offset: offsetNum }],
     ['results', resultValues],
     usingLimit && ['done', doneRef.current],
+    !usingLimit && !usingOffset && ['total', resultValues.length],
   ])
   response.end()
 }
