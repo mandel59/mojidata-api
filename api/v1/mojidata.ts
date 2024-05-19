@@ -1,31 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import Database from 'better-sqlite3'
 import { castToStringArray } from './_lib/cast'
 import { writeJson, writeObject } from './_lib/json-encoder'
 import { getResponseWriter } from './_lib/get-response-writer'
 import { getApiHeaders } from './_lib/getApiHeaders'
 import { queryExpressions } from './_lib/query-expressions'
-
-const mojidb = require.resolve('@mandel59/mojidata/dist/moji.db')
-
-const db = new Database(mojidb)
-
-db.table("regexp_all", {
-  parameters: ["_string", "_pattern"],
-  columns: ["substr", "groups"],
-  rows: function* (string: any, pattern: any) {
-    const re = new RegExp(pattern, "gu");
-    let m;
-    while (m = re.exec(string)) {
-      const substr = m[0];
-      if (m.groups) {
-        yield [substr, JSON.stringify(m.groups)];
-      } else {
-        yield [substr, JSON.stringify(m.slice(1))];
-      }
-    }
-  }
-})
+import { db } from './_lib/mojidata-db'
 
 const fieldNames = new Set<string>(queryExpressions.map(([key, _value]) => key))
 
