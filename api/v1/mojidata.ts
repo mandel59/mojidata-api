@@ -27,7 +27,6 @@ function getMojidata(char: string, selection: string[]) {
   return stmt.get({ ucs: char })
 }
 
-export const maxDuration = 60
 export default async (request: VercelRequest, response: VercelResponse) => {
   let { char, select } = request.query
   const headers = getApiHeaders()
