@@ -1,7 +1,7 @@
 import { db } from './mojidata-db'
 
 const queries: Partial<Record<string, string>> = {
-  'UCS': `WITH x(x) AS (VALUES (parse_int(?, 16))) SELECT DISTINCT char(x) AS r FROM x WHERE char(x) regexp '^[\\p{L}\\p{N}\\p{S}]$'`,
+  UCS: `WITH x(x) AS (VALUES (parse_int(?, 16))) SELECT DISTINCT char(x) AS r FROM x WHERE char(x) regexp '^[\\p{L}\\p{N}\\p{S}]$'`,
   'mji.読み': `
     SELECT DISTINCT mji.対応するUCS AS r
     FROM mji
@@ -39,7 +39,7 @@ const queries: Partial<Record<string, string>> = {
     FROM mji
     WHERE mji.対応するUCS IS NOT NULL
       AND mji.総画数 >= cast(? as integer)`,
-      'mji.MJ文字図形名': `
+  'mji.MJ文字図形名': `
     SELECT DISTINCT mji.対応するUCS AS r
     FROM mji
     WHERE mji.対応するUCS IS NOT NULL
@@ -51,7 +51,19 @@ export function getQuery(p: string) {
   if (query === undefined) {
     throw new Error(`Unknown query key: ${p}`)
   }
-  return query
+  return query.trim()
+}
+
+export function charSatisfiesConditions(
+  char: string,
+  ps: string[],
+  qs: string[],
+) {
+  const query = `WITH c(char) AS (VALUES (?))
+    SELECT ${ps.map((p) => `c.char IN (${getQuery(p)})`).join(' AND ')} AS r
+    FROM c`
+  const stmt = db.prepare<any, ['r'], { r: number }>(query).pluck()
+  return Boolean(stmt.get([char, ...qs]))
 }
 
 export function* search(ps: string[], qs: string[]) {

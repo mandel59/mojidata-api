@@ -3,6 +3,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
 import { writeObject } from './_lib/json-encoder'
 import { Ref, drop, filter, take } from './_lib/iterator-utils'
+import { charSatisfiesConditions } from './_lib/libsearch'
+import search from './search'
 
 const jsonContentType = 'application/json; charset=utf-8'
 
@@ -23,12 +25,19 @@ function castToStringArray(x: string | string[] | null): string[] {
 }
 
 export default async (request: VercelRequest, response: VercelResponse) => {
-  const idsFinder = new IDSFinder({
-    dbOptions: {
-      readonly: true,
-    },
-  })
-  let { ids, whole, limit, offset, all_results } = request.query
+  let { p, q, ids, whole, limit, offset, all_results } = request.query
+  const ps = castToStringArray(p)
+  const qs = castToStringArray(q)
+  if (qs.length !== ps.length) {
+    response.status(400)
+    headers.forEach(({ key, value }) => response.setHeader(key, value))
+    response.send(
+      JSON.stringify({
+        error: { message: 'q.length must be equal to p.length' },
+      }),
+    )
+    return
+  }
   ids = castToStringArray(ids)
   whole = castToStringArray(whole)
   const limitNum = (limit && parseInt(String(limit), 10)) || undefined
@@ -37,6 +46,9 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   const allResults = Boolean(all_results)
 
   if (ids.length === 0 && whole.length === 0) {
+    if (ps.length > 0) {
+      return await search(request, response)
+    }
     response.status(400)
     headers.forEach(({ key, value }) => response.setHeader(key, value))
     response.send({
@@ -46,6 +58,12 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     return
   }
 
+  const idsFinder = new IDSFinder({
+    dbOptions: {
+      readonly: true,
+    },
+  })
+
   let results = idsFinder.find(...ids, ...whole.map((x) => `§${whole}§`))
 
   const usingLimit = Number.isSafeInteger(limitNum) && limitNum! > 0
@@ -53,6 +71,10 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 
   if (!allResults) {
     results = filter((x) => x[0] !== '&', results)
+  }
+
+  if (ps.length > 0) {
+    results = filter((x) => charSatisfiesConditions(x, ps, qs), results)
   }
 
   if (usingOffset) {
@@ -74,7 +96,18 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   response.status(200)
   headers.forEach(({ key, value }) => response.setHeader(key, value))
   await writeObject(write, [
-    ['query', { ids, whole, limit: limitNum, offset: offsetNum }],
+    [
+      'query',
+      {
+        ids,
+        whole,
+        p: ps.length > 0 ? ps : undefined,
+        q: qs.length > 0 ? qs : undefined,
+        limit: limitNum,
+        offset: offsetNum,
+        all_results: all_results ? true : undefined,
+      },
+    ],
     ['results', resultValues],
     usingLimit && ['done', doneRef.current],
     !usingLimit && !usingOffset && ['total', resultValues.length],

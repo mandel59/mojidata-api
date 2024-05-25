@@ -7,7 +7,7 @@ import { castToStringArray } from './_lib/cast'
 import { search } from './_lib/libsearch'
 
 export default async (request: VercelRequest, response: VercelResponse) => {
-  let { p, q, limit, offset } = request.query
+  let { p, q, limit, offset, all_results } = request.query
   const ps = castToStringArray(p)
   const qs = castToStringArray(q)
   const headers = getApiHeaders()
@@ -48,7 +48,16 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   response.status(200)
   headers.forEach(({ key, value }) => response.setHeader(key, value))
   await writeObject(write, [
-    ['query', { p: ps, q: qs, limit: limitNum, offset: offsetNum }],
+    [
+      'query',
+      {
+        p: ps,
+        q: qs,
+        limit: limitNum,
+        offset: offsetNum,
+        all_results: all_results ? true : undefined,
+      },
+    ],
     ['results', r],
     usingLimit && ['done', doneRef.current],
     !usingLimit && !usingOffset && ['total', r.length],
