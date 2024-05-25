@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
 import { writeObject } from './_lib/json-encoder'
 import { Ref, drop, filter, take } from './_lib/iterator-utils'
-import { charSatisfiesConditions } from './_lib/libsearch'
+import { filterChars } from './_lib/libsearch'
 import search from './search'
 
 const jsonContentType = 'application/json; charset=utf-8'
@@ -64,7 +64,10 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     },
   })
 
-  let results = idsFinder.find(...ids, ...whole.map((x) => `§${whole}§`))
+  let results: Generator<string> | string[] = idsFinder.find(
+    ...ids,
+    ...whole.map((x) => `§${whole}§`),
+  )
 
   const usingLimit = Number.isSafeInteger(limitNum) && limitNum! > 0
   const usingOffset = Number.isSafeInteger(offsetNum) && offsetNum! > 0
@@ -74,7 +77,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   }
 
   if (ps.length > 0) {
-    results = filter((x) => charSatisfiesConditions(x, ps, qs), results)
+    results = filterChars([...results], ps, qs)
   }
 
   if (usingOffset) {

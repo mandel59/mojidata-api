@@ -54,16 +54,13 @@ export function getQuery(p: string) {
   return query.trim()
 }
 
-export function charSatisfiesConditions(
-  char: string,
-  ps: string[],
-  qs: string[],
-) {
-  const query = `WITH c(char) AS (VALUES (?))
-    SELECT ${ps.map((p) => `c.char IN (${getQuery(p)})`).join(' AND ')} AS r
-    FROM c`
-  const stmt = db.prepare<any, ['r'], { r: number }>(query).pluck()
-  return Boolean(stmt.get([char, ...qs]))
+export function* filterChars(chars: string[], ps: string[], qs: string[]) {
+  const query = `WITH c(char) AS (select value from json_each(?))
+    SELECT c.char AS r
+    FROM c
+    WHERE ${ps.map((p) => `c.char IN (${getQuery(p)})`).join(' AND ')}`
+  const stmt = db.prepare<any, ['r'], { r: string }>(query).pluck()
+  yield* stmt.iterate([JSON.stringify(chars), ...qs])
 }
 
 export function* search(ps: string[], qs: string[]) {
