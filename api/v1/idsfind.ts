@@ -24,6 +24,7 @@ function castToStringArray(x: string | string[] | null): string[] {
   return x
 }
 
+export const maxDuration = 60
 export default async (request: VercelRequest, response: VercelResponse) => {
   let { p, q, ids, whole, limit, offset, all_results } = request.query
   const ps = castToStringArray(p)

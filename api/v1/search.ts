@@ -6,6 +6,7 @@ import { Ref, drop, take } from './_lib/iterator-utils'
 import { castToStringArray } from './_lib/cast'
 import { search } from './_lib/libsearch'
 
+export const maxDuration = 60
 export default async (request: VercelRequest, response: VercelResponse) => {
   let { p, q, limit, offset, all_results } = request.query
   const ps = castToStringArray(p)
