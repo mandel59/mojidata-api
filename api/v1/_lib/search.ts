@@ -1,10 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import { writeObject } from './_lib/json-encoder'
-import { getResponseWriter } from './_lib/get-response-writer'
-import { getApiHeaders } from './_lib/getApiHeaders'
-import { Ref, drop, take } from './_lib/iterator-utils'
-import { castToStringArray } from './_lib/cast'
-import { search } from './_lib/libsearch'
+import { writeObject } from './json-encoder'
+import { getResponseWriter } from './get-response-writer'
+import { getApiHeaders } from './getApiHeaders'
+import { Ref, drop, take } from './iterator-utils'
+import { castToStringArray } from './cast'
+import { search } from './libsearch'
 
 export default async (request: VercelRequest, response: VercelResponse) => {
   let { p, q, limit, offset, all_results } = request.query

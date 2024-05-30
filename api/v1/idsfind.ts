@@ -4,27 +4,12 @@ import { IDSFinder } from '@mandel59/idstool/lib/ids-finder'
 import { writeObject } from './_lib/json-encoder'
 import { Ref, drop, filter, take } from './_lib/iterator-utils'
 import { filterChars } from './_lib/libsearch'
-import search from './search'
-
-const jsonContentType = 'application/json; charset=utf-8'
-
-const headers = [
-  { key: 'Content-Type', value: jsonContentType },
-  { key: 'Access-Control-Allow-Origin', value: '*' },
-  { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS' },
-]
-
-function castToStringArray(x: string | string[] | null): string[] {
-  if (x == null) {
-    return []
-  }
-  if (typeof x === 'string') {
-    return [x]
-  }
-  return x
-}
+import search from './_lib/search'
+import { getApiHeaders } from './_lib/getApiHeaders'
+import { castToStringArray } from './_lib/cast'
 
 export default async (request: VercelRequest, response: VercelResponse) => {
+  const headers = getApiHeaders()
   let { p, q, ids, whole, limit, offset, all_results } = request.query
   const ps = castToStringArray(p)
   const qs = castToStringArray(q)
