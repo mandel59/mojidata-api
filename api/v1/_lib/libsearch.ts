@@ -44,29 +44,81 @@ const queries: Partial<Record<string, string>> = {
     FROM mji
     WHERE mji.対応するUCS IS NOT NULL
       AND mji.MJ文字図形名 = ?`,
+  'unihan.kTotalStrokes': `
+    SELECT DISTINCT UCS AS r
+    FROM unihan_each_kTotalStrokes
+    WHERE cast(value as integer) = cast(? as integer)`,
+  'unihan.kTotalStrokes.lt': `
+    SELECT DISTINCT UCS AS r
+    FROM unihan_each_kTotalStrokes
+    WHERE cast(value as integer) < cast(? as integer)`,
+  'unihan.kTotalStrokes.le': `
+    SELECT DISTINCT UCS AS r
+    FROM unihan_each_kTotalStrokes
+    WHERE cast(value as integer) <= cast(? as integer)`,
+  'unihan.kTotalStrokes.gt': `
+    SELECT DISTINCT UCS AS r
+    FROM unihan_each_kTotalStrokes
+    WHERE cast(value as integer) > cast(? as integer)`,
+  'unihan.kTotalStrokes.ge': `
+    SELECT DISTINCT UCS AS r
+    FROM unihan_each_kTotalStrokes
+    WHERE cast(value as integer) >= cast(? as integer)`,
 }
 
-export function getQuery(p: string) {
+const queries2: Partial<Record<string, string>> = {
+  totalStrokes: `SELECT * FROM (${queries[
+    'unihan.kTotalStrokes'
+  ]!!.trim()} UNION ${queries['mji.総画数']!!.trim()})`,
+  'totalStrokes.lt': `SELECT * FROM (${queries[
+    'unihan.kTotalStrokes.lt'
+  ]!!.trim()} UNION ${queries['mji.総画数.lt']!!.trim()})`,
+  'totalStrokes.le': `SELECT * FROM (${queries[
+    'unihan.kTotalStrokes.le'
+  ]!!.trim()} UNION ${queries['mji.総画数.le']!!.trim()})`,
+  'totalStrokes.gt': `SELECT * FROM (${queries[
+    'unihan.kTotalStrokes.gt'
+  ]!!.trim()} UNION ${queries['mji.総画数.gt']!!.trim()})`,
+  'totalStrokes.ge': `SELECT * FROM (${queries[
+    'unihan.kTotalStrokes.ge'
+  ]!!.trim()} UNION ${queries['mji.総画数.ge']!!.trim()})`,
+}
+
+export function getQueryAndArgs(p: string, q: string) {
   const query = queries[p]
-  if (query === undefined) {
-    throw new Error(`Unknown query key: ${p}`)
+  if (query) {
+    return [query.trim(), [q]] as [string, string[]]
   }
-  return query.trim()
+  const query2 = queries2[p]
+  if (query2) {
+    return [query2.trim(), [q, q]] as [string, string[]]
+  }
+  throw new Error(`Unknown query key: ${p}`)
 }
 
 export function* filterChars(chars: string[], ps: string[], qs: string[]) {
+  const queryAndArgs = ps.map((p, i) => getQueryAndArgs(p, qs[i]))
   const query = `WITH c(char) AS (select value from json_each(?))
     SELECT c.char AS r
     FROM c
-    WHERE ${ps.map((p) => `c.char IN (${getQuery(p)})`).join(' AND ')}`
+    WHERE ${queryAndArgs
+      .map(([query, _args]) => `c.char IN (${query})`)
+      .join(' AND ')}`
+  const args = ([] as string[]).concat(
+    ...queryAndArgs.map(([_query, args]) => args),
+  )
   const stmt = db.prepare<any, ['r'], { r: string }>(query).pluck()
-  yield* stmt.iterate([JSON.stringify(chars), ...qs])
+  yield* stmt.iterate([JSON.stringify(chars), ...args])
 }
 
 export function* search(ps: string[], qs: string[]) {
-  const query = ps.map((p) => getQuery(p)).join(' INTERSECT ')
+  const queryAndArgs = ps.map((p, i) => getQueryAndArgs(p, qs[i]))
+  const query = queryAndArgs.map(([query, _args]) => query).join('\nINTERSECT\n')
+  const args = ([] as string[]).concat(
+    ...queryAndArgs.map(([_query, args]) => args),
+  )
   const stmt = db.prepare<any, ['r'], { r: string }>(query).pluck()
-  for (const value of stmt.iterate(qs)) {
+  for (const value of stmt.iterate(args)) {
     yield value
   }
 }

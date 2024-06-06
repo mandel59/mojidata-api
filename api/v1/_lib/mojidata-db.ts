@@ -33,4 +33,6 @@ db.function('regexp', (pattern: string, s: string) => {
   return new RegExp(pattern, 'v').test(s) ? 1n : 0n
 })
 
+db.exec(`create index if not exists unihan_each_kTotalStrokes_value on unihan_each_kTotalStrokes(cast(value as integer))`)
+
 export { db }
