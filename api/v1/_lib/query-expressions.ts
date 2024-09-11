@@ -98,7 +98,7 @@ export const queryExpressions = [
           unihan.value glob printf('*%s*', @ucs)
           OR (unihan.value glob printf('*U+%04X*', unicode(@ucs))
             AND NOT unihan.value glob printf('*U+%04X[0-9A-F]*', unicode(@ucs))))
-          AND unihan.property NOT IN ('kJapanese', 'kSMSZD2003Readings')
+          AND unihan.property NOT IN ('kJapanese', 'kSMSZD2003Readings', 'kFanqie')
         ORDER BY UCS
         LIMIT 100))`,
   ],
