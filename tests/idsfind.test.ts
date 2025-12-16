@@ -109,7 +109,7 @@ describe('GET /api/v1/idsfind', () => {
 
     const mjiEntries: any[] | undefined = mojidata?.results?.mji
     expect(Array.isArray(mjiEntries)).toBe(true)
-    expect(mjiEntries.length).toBeGreaterThan(0)
+    expect(mjiEntries?.length).toBeGreaterThan(0)
 
     const getFirst = (obj: any, keys: string[]) => {
       for (const key of keys) {
@@ -120,7 +120,7 @@ describe('GET /api/v1/idsfind', () => {
       return undefined
     }
 
-    const sample = mjiEntries.find((x) => {
+    const sample = mjiEntries?.find((x) => {
       const mj = getFirst(x, ['MJ文字図形名', 'mji.MJ文字図形名'])
       const s = getFirst(x, ['総画数', 'mji.総画数'])
       return typeof mj === 'string' && mj.startsWith('MJ') && typeof s === 'string' && /^[0-9]+$/.test(s)
