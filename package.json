@@ -19,10 +19,10 @@
     "better-sqlite3": "^12.5.0"
   },
   "devDependencies": {
-    "@types/node": "^16.11.6",
-    "@vercel/node": "^4.0.0",
-    "prettier": "^2.8.7",
-    "typescript": "^5.0.4",
+    "@types/node": "^16.18.126",
+    "@vercel/node": "^5.5.15",
+    "prettier": "^2.8.8",
+    "typescript": "^5.9.3",
     "vercel": "^50.1.0"
   }
 }
