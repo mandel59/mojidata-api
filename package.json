@@ -10,16 +10,19 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "overrides": {
+    "better-sqlite3": "^12.5.0"
+  },
   "dependencies": {
     "@mandel59/idstool": "^1.6.1",
     "@mandel59/mojidata": "^1.6.1",
-    "better-sqlite3": "^10.0.0"
+    "better-sqlite3": "^12.5.0"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
-    "@vercel/node": "^3.1.5",
+    "@vercel/node": "^4.0.0",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4",
-    "vercel": "^34.2.3"
+    "vercel": "^50.1.0"
   }
 }
