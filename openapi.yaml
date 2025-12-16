@@ -7,7 +7,7 @@ info:
 
     Base paths are derived from the file layout under `api/` (Vercel convention).
 servers:
-  - url: /
+  - url: http://localhost:3001/
 tags:
   - name: mojidata
   - name: ids
