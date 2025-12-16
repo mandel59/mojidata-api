@@ -51,7 +51,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
 
   let results: Generator<string> | string[] = idsFinder.find(
     ...ids,
-    ...whole.map((x) => `§${whole}§`),
+    ...whole.map((x) => `§${x}§`),
   )
 
   const usingLimit = Number.isSafeInteger(limitNum) && limitNum! > 0

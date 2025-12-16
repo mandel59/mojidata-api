@@ -46,23 +46,23 @@ const queries: Partial<Record<string, string>> = {
       AND mji.MJ文字図形名 = ?`,
   'unihan.kTotalStrokes': `
     SELECT DISTINCT UCS AS r
-    FROM unihan_each_kTotalStrokes
+    FROM unihan_kTotalStrokes
     WHERE cast(value as integer) = cast(? as integer)`,
   'unihan.kTotalStrokes.lt': `
     SELECT DISTINCT UCS AS r
-    FROM unihan_each_kTotalStrokes
+    FROM unihan_kTotalStrokes
     WHERE cast(value as integer) < cast(? as integer)`,
   'unihan.kTotalStrokes.le': `
     SELECT DISTINCT UCS AS r
-    FROM unihan_each_kTotalStrokes
+    FROM unihan_kTotalStrokes
     WHERE cast(value as integer) <= cast(? as integer)`,
   'unihan.kTotalStrokes.gt': `
     SELECT DISTINCT UCS AS r
-    FROM unihan_each_kTotalStrokes
+    FROM unihan_kTotalStrokes
     WHERE cast(value as integer) > cast(? as integer)`,
   'unihan.kTotalStrokes.ge': `
     SELECT DISTINCT UCS AS r
-    FROM unihan_each_kTotalStrokes
+    FROM unihan_kTotalStrokes
     WHERE cast(value as integer) >= cast(? as integer)`,
 }
 
@@ -108,7 +108,7 @@ export function* filterChars(chars: string[], ps: string[], qs: string[]) {
     ...queryAndArgs.map(([_query, args]) => args),
   )
   const stmt = db.prepare<any, ['r'], { r: string }>(query).pluck()
-  yield* stmt.iterate([JSON.stringify(chars), ...args])
+  yield* stmt.iterate(JSON.stringify(chars), ...args)
 }
 
 export function* search(ps: string[], qs: string[]) {
@@ -118,7 +118,7 @@ export function* search(ps: string[], qs: string[]) {
     ...queryAndArgs.map(([_query, args]) => args),
   )
   const stmt = db.prepare<any, ['r'], { r: string }>(query).pluck()
-  for (const value of stmt.iterate(args)) {
+  for (const value of stmt.iterate(...args)) {
     yield value
   }
 }
