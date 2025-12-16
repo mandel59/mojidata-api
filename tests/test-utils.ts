@@ -46,7 +46,17 @@ export async function fetchJson(
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const response = await fetch(url, { ...init, signal: controller.signal })
+    const headers = new Headers(init?.headers)
+    const bypass = process.env.X_VERCEL_PROTECTION_BYPASS
+    if (bypass && !headers.has('x-vercel-protection-bypass')) {
+      headers.set('x-vercel-protection-bypass', bypass)
+    }
+
+    const response = await fetch(url, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    })
     const text = await response.text()
     let json: any
     try {
@@ -67,4 +77,3 @@ export async function fetchJson(
     clearTimeout(timeoutId)
   }
 }
-
