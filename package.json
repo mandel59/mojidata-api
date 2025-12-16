@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "vercel dev --listen 3001",
-    "test": "bun test"
+    "test": "bun test",
+    "test-staging": "MOJIDATA_API_BASE_URL=https://mojidata-api-env-staging.ryusei.dev/ bun --env-file=.env.local test"
   },
   "keywords": [],
   "author": "",
